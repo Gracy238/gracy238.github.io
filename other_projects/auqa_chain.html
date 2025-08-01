@@ -1,1 +1,592 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aqua-Chain - Water Quality Monitoring</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .content {
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .map-container {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 2px solid #e9ecef;
+            position: relative;
+            min-height: 200px;
+        }
+
+        .sensor-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            position: absolute;
+            cursor: pointer;
+            border: 3px solid white;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            animation: pulse 2s infinite;
+        }
+
+        .sensor-dot.safe {
+            background: #28a745;
+        }
+
+        .sensor-dot.alert {
+            background: #dc3545;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        .status-card {
+            background: linear-gradient(135deg, #28a745, #20c997);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+        }
+
+        .status-card.alert {
+            background: linear-gradient(135deg, #dc3545, #fd7e14);
+            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+        }
+
+        .status-card h2 {
+            font-size: 18px;
+            margin-bottom: 5px;
+        }
+
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 20px;
+            border-radius: 25px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            margin-bottom: 15px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn-small {
+            padding: 12px 15px;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid #4facfe;
+        }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .data-label {
+            font-weight: 600;
+            color: #666;
+        }
+
+        .data-value {
+            color: #333;
+            font-weight: 500;
+        }
+
+        .chart-placeholder {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            color: #666;
+            margin: 15px 0;
+            border: 2px dashed #dee2e6;
+        }
+
+        .blockchain-info {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 12px;
+            margin-top: 15px;
+        }
+
+        .back-btn {
+            background: #6c757d;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+        }
+
+        .alert-screen {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            animation: alertPulse 1s infinite alternate;
+        }
+
+        @keyframes alertPulse {
+            from { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
+            to { box-shadow: 0 8px 25px rgba(255, 107, 107, 0.8); }
+        }
+
+        .alert-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+
+        .navigation {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 10px 20px;
+            border-radius: 25px 25px 0 0;
+            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
+            width: 400px;
+            max-width: 100%;
+        }
+
+        .nav-dots {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: #dee2e6;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .nav-dot.active {
+            background: #4facfe;
+            transform: scale(1.2);
+        }
+
+        .icon {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            vertical-align: middle;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌊 Aqua-Chain</h1>
+            <p>Decentralized Water Quality Monitoring</p>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboard" class="screen active">
+            <div class="content">
+                <div class="map-container">
+                    <h3 style="margin-bottom: 15px; color: #666;">Sensor Network Map</h3>
+                    <div class="sensor-dot safe" style="top: 30px; left: 60px;" onclick="showSensorDetail('WQ-123', 'safe')"></div>
+                    <div class="sensor-dot safe" style="top: 80px; right: 40px;" onclick="showSensorDetail('WQ-124', 'safe')"></div>
+                    <div class="sensor-dot alert" style="bottom: 40px; left: 80px;" onclick="showSensorDetail('WQ-456', 'alert')"></div>
+                    <div class="sensor-dot safe" style="bottom: 60px; right: 60px;" onclick="showSensorDetail('WQ-125', 'safe')"></div>
+                    <p style="margin-top: 20px; font-size: 14px; color: #666;">
+                        <span style="color: #28a745;">●</span> Safe &nbsp;&nbsp;
+                        <span style="color: #dc3545;">●</span> Alert
+                    </p>
+                </div>
+
+                <div class="status-card" id="overallStatus">
+                    <h2>Overall Water Quality</h2>
+                    <p style="font-size: 24px; font-weight: bold;">SAFE</p>
+                    <p style="font-size: 14px; opacity: 0.9;">3 of 4 sensors reporting safe levels</p>
+                </div>
+
+                <button class="btn" onclick="showDetailedReport()">
+                    📊 View Detailed Report
+                </button>
+
+                <div class="btn-grid">
+                    <button class="btn btn-small" onclick="showAlerts()">
+                        🔔 My Alerts
+                    </button>
+                    <button class="btn btn-small" onclick="showHistorical()">
+                        📈 Historical Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Report Screen -->
+        <div id="detailed-report" class="screen">
+            <div class="content">
+                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+                
+                <div class="data-card">
+                    <h3 style="margin-bottom: 15px; color: #4facfe;">Sensor Details</h3>
+                    <div class="data-row">
+                        <span class="data-label">Sensor ID:</span>
+                        <span class="data-value" id="sensorId">WQ-123</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Location:</span>
+                        <span class="data-value" id="sensorLocation">River Point A</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Status:</span>
+                        <span class="data-value" id="sensorStatus" style="color: #28a745;">Safe</span>
+                    </div>
+                </div>
+
+                <div class="data-card">
+                    <h3 style="margin-bottom: 15px; color: #4facfe;">Live Data</h3>
+                    <div class="data-row">
+                        <span class="data-label">pH Level:</span>
+                        <span class="data-value" id="phLevel">7.2</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Turbidity:</span>
+                        <span class="data-value" id="turbidity">4 NTU</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Dissolved Oxygen:</span>
+                        <span class="data-value" id="dissolvedOxygen">8 mg/L</span>
+                    </div>
+                </div>
+
+                <div class="chart-placeholder">
+                    📈 24-Hour Trend Chart
+                    <br><small>Backend integration required for real-time data visualization</small>
+                </div>
+
+                <div class="blockchain-info">
+                    <strong>🔗 Blockchain Verification</strong><br>
+                    Transaction ID: <span id="txId">0xAbc...123</span><br>
+                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px; cursor: pointer;">
+                        Verify on-chain
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alert Screen -->
+        <div id="alert-screen" class="screen">
+            <div class="content">
+                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+                
+                <div class="alert-screen">
+                    <div class="alert-icon">⚠️</div>
+                    <h2>WATER QUALITY ALERT</h2>
+                    <p style="font-size: 18px; margin: 10px 0;">IMMEDIATE ACTION REQUIRED</p>
+                </div>
+
+                <div class="data-card" style="border-left-color: #dc3545;">
+                    <div class="data-row">
+                        <span class="data-label">Sensor ID:</span>
+                        <span class="data-value">WQ-456</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Location:</span>
+                        <span class="data-value">Community Well B</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Contaminant:</span>
+                        <span class="data-value" style="color: #dc3545;">High Turbidity</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Level:</span>
+                        <span class="data-value" style="color: #dc3545; font-weight: bold;">25 NTU (Unsafe)</span>
+                    </div>
+                </div>
+
+                <div class="data-card" style="background: #fff3cd; border-left-color: #ffc107;">
+                    <h4 style="color: #856404; margin-bottom: 10px;">⚡ Recommended Action</h4>
+                    <p style="color: #856404;">
+                        <strong>Boil water before use.</strong><br>
+                        Local authorities have been automatically notified.<br>
+                        Expected resolution time: 2-4 hours.
+                    </p>
+                </div>
+
+                <div class="blockchain-info">
+                    <strong>🔗 Alert Verification</strong><br>
+                    Transaction ID: 0xDef...456<br>
+                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px; cursor: pointer;">
+                        Verify Alert on-chain
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alerts List Screen -->
+        <div id="alerts-list" class="screen">
+            <div class="content">
+                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+                
+                <h2 style="margin-bottom: 20px; color: #333;">Recent Alerts</h2>
+
+                <div class="data-card" style="border-left-color: #dc3545;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="color: #dc3545;">High Turbidity Alert</h4>
+                        <span style="font-size: 12px; color: #666;">2 hours ago</span>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">Community Well B - 25 NTU detected</p>
+                    <button style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; margin-top: 10px;" onclick="showAlert()">
+                        View Details
+                    </button>
+                </div>
+
+                <div class="data-card" style="border-left-color: #28a745;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="color: #28a745;">System Restored</h4>
+                        <span style="font-size: 12px; color: #666;">1 day ago</span>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">River Point C - Normal levels restored</p>
+                </div>
+
+                <div class="data-card" style="border-left-color: #ffc107;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <h4 style="color: #ffc107;">Maintenance Notice</h4>
+                        <span style="font-size: 12px; color: #666;">3 days ago</span>
+                    </div>
+                    <p style="font-size: 14px; color: #666;">Sensor WQ-127 - Scheduled maintenance completed</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Historical Data Screen -->
+        <div id="historical-data" class="screen">
+            <div class="content">
+                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
+                
+                <h2 style="margin-bottom: 20px; color: #333;">Historical Data</h2>
+
+                <div class="chart-placeholder" style="min-height: 200px;">
+                    📊 7-Day Water Quality Trends<br>
+                    <small>Backend integration required for historical data visualization</small>
+                </div>
+
+                <div class="data-card">
+                    <h4 style="margin-bottom: 15px;">Weekly Summary</h4>
+                    <div class="data-row">
+                        <span class="data-label">Average pH:</span>
+                        <span class="data-value">7.1</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Average Turbidity:</span>
+                        <span class="data-value">3.8 NTU</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Alerts Generated:</span>
+                        <span class="data-value">2</span>
+                    </div>
+                    <div class="data-row">
+                        <span class="data-label">Uptime:</span>
+                        <span class="data-value">99.2%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="navigation">
+            <div class="nav-dots">
+                <div class="nav-dot active" onclick="showDashboard()"></div>
+                <div class="nav-dot" onclick="showDetailedReport()"></div>
+                <div class="nav-dot" onclick="showAlerts()"></div>
+                <div class="nav-dot" onclick="showHistorical()"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showScreen(screenId) {
+            // Hide all screens
+            document.querySelectorAll('.screen').forEach(screen => {
+                screen.classList.remove('active');
+            });
+            
+            // Show target screen
+            document.getElementById(screenId).classList.add('active');
+            
+            // Update navigation dots
+            document.querySelectorAll('.nav-dot').forEach(dot => {
+                dot.classList.remove('active');
+            });
+        }
+
+        function showDashboard() {
+            showScreen('dashboard');
+            document.querySelectorAll('.nav-dot')[0].classList.add('active');
+        }
+
+        function showDetailedReport() {
+            showScreen('detailed-report');
+            document.querySelectorAll('.nav-dot')[1].classList.add('active');
+        }
+
+        function showAlert() {
+            showScreen('alert-screen');
+            document.querySelectorAll('.nav-dot')[2].classList.add('active');
+        }
+
+        function showAlerts() {
+            showScreen('alerts-list');
+            document.querySelectorAll('.nav-dot')[2].classList.add('active');
+        }
+
+        function showHistorical() {
+            showScreen('historical-data');
+            document.querySelectorAll('.nav-dot')[3].classList.add('active');
+        }
+
+        function showSensorDetail(sensorId, status) {
+            const locations = {
+                'WQ-123': 'River Point A',
+                'WQ-124': 'Lake District B',
+                'WQ-456': 'Community Well B',
+                'WQ-125': 'Mountain Stream C'
+            };
+
+            const data = {
+                'WQ-123': { ph: '7.2', turbidity: '4 NTU', oxygen: '8 mg/L', tx: '0xAbc...123' },
+                'WQ-124': { ph: '7.0', turbidity: '3 NTU', oxygen: '9 mg/L', tx: '0xBcd...234' },
+                'WQ-456': { ph: '6.8', turbidity: '25 NTU', oxygen: '6 mg/L', tx: '0xDef...456' },
+                'WQ-125': { ph: '7.3', turbidity: '2 NTU', oxygen: '10 mg/L', tx: '0xGhi...789' }
+            };
+
+            document.getElementById('sensorId').textContent = sensorId;
+            document.getElementById('sensorLocation').textContent = locations[sensorId];
+            document.getElementById('sensorStatus').textContent = status === 'safe' ? 'Safe' : 'Alert';
+            document.getElementById('sensorStatus').style.color = status === 'safe' ? '#28a745' : '#dc3545';
+            
+            if (data[sensorId]) {
+                document.getElementById('phLevel').textContent = data[sensorId].ph;
+                document.getElementById('turbidity').textContent = data[sensorId].turbidity;
+                document.getElementById('dissolvedOxygen').textContent = data[sensorId].oxygen;
+                document.getElementById('txId').textContent = data[sensorId].tx;
+            }
+
+            showDetailedReport();
+        }
+
+        // Simulate real-time updates
+        setInterval(() => {
+            const sensors = document.querySelectorAll('.sensor-dot.safe');
+            sensors.forEach(sensor => {
+                sensor.style.transform = 'scale(' + (0.9 + Math.random() * 0.2) + ')';
+                setTimeout(() => {
+                    sensor.style.transform = 'scale(1)';
+                }, 200);
+            });
+        }, 3000);
+
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            // Simulate data updates every 30 seconds
+            setInterval(() => {
+                const phElement = document.getElementById('phLevel');
+                if (phElement) {
+                    const currentPH = parseFloat(phElement.textContent);
+                    const newPH = (currentPH + (Math.random() - 0.5) * 0.2).toFixed(1);
+                    phElement.textContent = newPH;
+                }
+            }, 30000);
+        });
+    </script>
+</body>
+</html>
