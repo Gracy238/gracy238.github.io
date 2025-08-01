@@ -19,11 +19,11 @@
         }
 
         .container {
-            max-width: 400px;
-            margin: 0 auto;
+            width: 100%;
+            max-width: 100vw;
+            margin: 0;
             background: white;
             min-height: 100vh;
-            box-shadow: 0 0 30px rgba(0,0,0,0.3);
             position: relative;
             overflow: hidden;
         }
@@ -31,24 +31,25 @@
         .header {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
             color: white;
-            padding: 20px;
+            padding: 25px 20px;
             text-align: center;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding-top: 50px; /* Account for status bar */
         }
 
         .header h1 {
-            font-size: 24px;
-            font-weight: 600;
-            margin-bottom: 5px;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 8px;
         }
 
         .header p {
-            font-size: 14px;
+            font-size: 16px;
             opacity: 0.9;
         }
 
         .content {
-            padding: 20px;
+            padding: 25px 20px 120px;
         }
 
         .screen {
@@ -61,22 +62,22 @@
 
         .map-container {
             background: #f8f9fa;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 20px;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 25px;
             border: 2px solid #e9ecef;
             position: relative;
-            min-height: 200px;
+            min-height: 250px;
         }
 
         .sensor-dot {
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             border-radius: 50%;
             position: absolute;
             cursor: pointer;
-            border: 3px solid white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            border: 4px solid white;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
             animation: pulse 2s infinite;
         }
 
@@ -97,36 +98,37 @@
         .status-card {
             background: linear-gradient(135deg, #28a745, #20c997);
             color: white;
-            padding: 20px;
-            border-radius: 15px;
+            padding: 25px;
+            border-radius: 20px;
             text-align: center;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+            margin-bottom: 25px;
+            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
         }
 
         .status-card.alert {
             background: linear-gradient(135deg, #dc3545, #fd7e14);
-            box-shadow: 0 4px 15px rgba(220, 53, 69, 0.3);
+            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
         }
 
         .status-card h2 {
-            font-size: 18px;
-            margin-bottom: 5px;
+            font-size: 20px;
+            margin-bottom: 8px;
         }
 
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 15px 20px;
-            border-radius: 25px;
-            font-size: 16px;
+            padding: 18px 25px;
+            border-radius: 30px;
+            font-size: 18px;
             font-weight: 600;
             cursor: pointer;
             width: 100%;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+            -webkit-tap-highlight-color: transparent;
         }
 
         .btn:hover {
@@ -137,33 +139,33 @@
         .btn-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-top: 20px;
+            gap: 20px;
+            margin-top: 25px;
         }
 
         .btn-small {
-            padding: 12px 15px;
-            font-size: 14px;
+            padding: 15px 18px;
+            font-size: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 8px;
+            gap: 10px;
         }
 
         .data-card {
             background: white;
-            border-radius: 15px;
-            padding: 20px;
-            margin-bottom: 15px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border-left: 4px solid #4facfe;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
+            border-left: 5px solid #4facfe;
         }
 
         .data-row {
             display: flex;
             justify-content: space-between;
-            margin-bottom: 10px;
-            padding: 8px 0;
+            margin-bottom: 15px;
+            padding: 12px 0;
             border-bottom: 1px solid #f1f3f4;
         }
 
@@ -175,96 +177,138 @@
         .data-label {
             font-weight: 600;
             color: #666;
+            font-size: 16px;
         }
 
         .data-value {
             color: #333;
             font-weight: 500;
+            font-size: 16px;
         }
 
         .chart-placeholder {
             background: #f8f9fa;
-            border-radius: 10px;
-            padding: 20px;
+            border-radius: 15px;
+            padding: 30px 25px;
             text-align: center;
             color: #666;
-            margin: 15px 0;
+            margin: 20px 0;
             border: 2px dashed #dee2e6;
+            font-size: 16px;
         }
 
         .blockchain-info {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
             color: white;
-            padding: 15px;
-            border-radius: 10px;
-            font-size: 12px;
-            margin-top: 15px;
+            padding: 20px;
+            border-radius: 15px;
+            font-size: 14px;
+            margin-top: 20px;
         }
 
         .back-btn {
             background: #6c757d;
-            margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(108, 117, 125, 0.4);
+            margin-bottom: 25px;
+            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
         }
 
         .alert-screen {
             background: linear-gradient(135deg, #ff6b6b, #ee5a24);
             color: white;
-            padding: 20px;
-            border-radius: 15px;
+            padding: 30px 25px;
+            border-radius: 20px;
             text-align: center;
-            margin-bottom: 20px;
+            margin-bottom: 25px;
             animation: alertPulse 1s infinite alternate;
         }
 
         @keyframes alertPulse {
-            from { box-shadow: 0 4px 15px rgba(255, 107, 107, 0.4); }
-            to { box-shadow: 0 8px 25px rgba(255, 107, 107, 0.8); }
+            from { box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4); }
+            to { box-shadow: 0 10px 30px rgba(255, 107, 107, 0.8); }
         }
 
         .alert-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+            font-size: 60px;
+            margin-bottom: 15px;
         }
 
         .navigation {
             position: fixed;
             bottom: 0;
-            left: 50%;
-            transform: translateX(-50%);
+            left: 0;
+            right: 0;
             background: white;
-            padding: 10px 20px;
-            border-radius: 25px 25px 0 0;
-            box-shadow: 0 -4px 15px rgba(0,0,0,0.1);
-            width: 400px;
-            max-width: 100%;
+            padding: 20px;
+            border-radius: 30px 30px 0 0;
+            box-shadow: 0 -6px 20px rgba(0,0,0,0.15);
+            width: 100%;
         }
 
         .nav-dots {
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 15px;
         }
 
         .nav-dot {
-            width: 12px;
-            height: 12px;
+            width: 16px;
+            height: 16px;
             border-radius: 50%;
             background: #dee2e6;
             cursor: pointer;
             transition: all 0.3s ease;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .nav-dot.active {
             background: #4facfe;
-            transform: scale(1.2);
+            transform: scale(1.3);
         }
 
         .icon {
             display: inline-block;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             vertical-align: middle;
+        }
+
+        /* Mobile-specific optimizations */
+        @media (max-width: 480px) {
+            .header {
+                padding-top: 60px;
+            }
+            
+            .content {
+                padding: 30px 25px 140px;
+            }
+            
+            .btn {
+                min-height: 56px;
+            }
+            
+            .sensor-dot {
+                width: 28px;
+                height: 28px;
+            }
+        }
+
+        /* Remove tap highlights on mobile */
+        * {
+            -webkit-tap-highlight-color: transparent;
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        input, textarea {
+            -webkit-user-select: text;
+            -khtml-user-select: text;
+            -moz-user-select: text;
+            -ms-user-select: text;
+            user-select: text;
         }
     </style>
 </head>
