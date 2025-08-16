@@ -1,635 +1,1573 @@
+
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Aqua-Chain - Water Quality Monitoring</title>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AquaChain - Water Quality Monitoring</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+      }
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            color: #333;
-        }
+      :root {
+        --primary: #1e3c72;
+        --primary-light: #2a5298;
+        --secondary: #0ea5e9;
+        --success: #22c55e;
+        --warning: #eab308;
+        --danger: #ef4444;
+        --dark: #1f2937;
+        --light: #f8fafc;
+        --gray: #64748b;
+        --border: #e2e8f0;
+        --accent: #3b82f6;
+      }
 
-        .container {
-            width: 100%;
-            max-width: 100vw;
-            margin: 0;
-            background: white;
-            min-height: 100vh;
-            position: relative;
-            overflow: hidden;
-        }
+      body {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        color: var(--dark);
+        background-attachment: fixed;
+      }
 
+      .app-container {
+        max-width: 1200px;
+        margin: 0 auto;
+        background: white;
+        min-height: 100vh;
+        box-shadow: 0 0 30px rgba(0, 0, 0, 0.3);
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Water wave background effect */
+      .water-wave {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 100px;
+        background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 1200 120" xmlns="http://www.w3.org/2000/svg" fill="%233b82f622"><path d="M0 0v46.29c47.79 22.2 103.59 32.17 158 28 70.36-5.37 136.33-33.31 206.8-37.5 73.84-4.36 147.54 16.88 218.2 35.26 69.27 18 138.3 24.88 209.4 13.08 36.15-6 69.85-17.84 104.45-29.34C989.49 25 1113-14.29 1200 52.47V0z" /></svg>');
+        background-size: 1200px 100px;
+        background-repeat: repeat-x;
+        opacity: 0.3;
+        z-index: 0;
+        animation: wave 15s linear infinite;
+      }
+      
+      .water-wave:nth-child(2) {
+        animation-delay: 0.5s;
+        opacity: 0.2;
+        height: 80px;
+        background-size: 1100px 80px;
+      }
+      
+      .water-wave:nth-child(3) {
+        animation-delay: 1s;
+        opacity: 0.1;
+        height: 60px;
+        background-size: 1000px 60px;
+      }
+      
+      @keyframes wave {
+        0% { background-position-x: 0; }
+        100% { background-position-x: 1200px; }
+      }
+
+      .header {
+        background: linear-gradient(
+          135deg,
+          var(--primary) 0%,
+          var(--primary-light) 100%
+        );
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      }
+
+      .logo {
+        font-size: 1.8rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        z-index: 10;
+      }
+
+      .logo i {
+        font-size: 1.5rem;
+        color: var(--secondary);
+      }
+
+      .status-badge {
+        padding: 0.5rem 1rem;
+        border-radius: 25px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: all 0.3s ease;
+        z-index: 10;
+        backdrop-filter: blur(5px);
+        background: rgba(255, 255, 255, 0.15);
+      }
+
+      .status-safe {
+        background: rgba(34, 197, 94, 0.2);
+        color: #16a34a;
+        border: 2px solid rgba(34, 197, 94, 0.3);
+      }
+
+      .status-warning {
+        background: rgba(234, 179, 8, 0.2);
+        color: #ca8a04;
+        border: 2px solid rgba(234, 179, 8, 0.3);
+      }
+
+      .status-alert {
+        background: rgba(239, 68, 68, 0.2);
+        color: #dc2626;
+        border: 2px solid rgba(239, 68, 68, 0.3);
+      }
+
+      .nav-tabs {
+        background: var(--light);
+        display: flex;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: 70px;
+        z-index: 90;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .nav-tabs::-webkit-scrollbar {
+        height: 5px;
+      }
+
+      .nav-tabs::-webkit-scrollbar-track {
+        background: #f1f1f1;
+      }
+
+      .nav-tabs::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+      }
+
+      .nav-tabs::-webkit-scrollbar-thumb:hover {
+        background: #555;
+      }
+
+      .tab {
+        padding: 1rem 2rem;
+        cursor: pointer;
+        border: none;
+        background: none;
+        font-size: 1rem;
+        font-weight: 500;
+        color: var(--gray);
+        transition: all 0.2s;
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        flex-shrink: 0;
+      }
+
+      .tab.active {
+        color: var(--primary);
+        background: white;
+      }
+
+      .tab.active::after {
+        content: "";
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--primary);
+      }
+
+      .tab:hover:not(.active) {
+        background: #e2e8f0;
+      }
+
+      .tab i {
+        font-size: 1.2rem;
+      }
+
+      .content {
+        padding: 2rem;
+        flex: 1;
+        position: relative;
+        z-index: 10;
+      }
+
+      .screen {
+        display: none;
+        animation: fadeIn 0.5s ease;
+      }
+
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      .screen.active {
+        display: block;
+      }
+
+      .screen-title {
+        margin-bottom: 1.5rem;
+        color: var(--primary);
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+      }
+
+      .screen-title i {
+        font-size: 1.5rem;
+        color: var(--accent);
+      }
+
+      #map {
+        height: 500px;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+        z-index: 50;
+        border: 1px solid var(--border);
+      }
+
+      .map-overlay {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 400;
+        background: rgba(255, 255, 255, 0.9);
+        padding: 0.75rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        display: flex;
+        gap: 0.5rem;
+        backdrop-filter: blur(5px);
+        flex-wrap: wrap;
+      }
+
+      .map-overlay-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+        font-size: 0.9rem;
+        padding: 0.25rem 0.5rem;
+        background: rgba(255, 255, 255, 0.7);
+        border-radius: 20px;
+      }
+
+      .sensor-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+      }
+
+      .sensor-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        cursor: pointer;
+        transition: all 0.2s;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+        z-index: 20;
+      }
+
+      .sensor-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--success);
+        z-index: 1;
+      }
+
+      .sensor-card.status-warning::before {
+        background: var(--warning);
+      }
+
+      .sensor-card.status-alert::before {
+        background: var(--danger);
+      }
+
+      .sensor-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1);
+        border-color: var(--secondary);
+      }
+
+      .sensor-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 1rem;
+        position: relative;
+        z-index: 2;
+      }
+
+      .sensor-name {
+        font-weight: 600;
+        font-size: 1.1rem;
+        color: var(--dark);
+      }
+
+      .sensor-id {
+        color: var(--gray);
+        font-size: 0.9rem;
+        margin-bottom: 0.25rem;
+      }
+
+      .sensor-status {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+      }
+
+      .status-green {
+        background: var(--success);
+      }
+      .status-red {
+        background: var(--danger);
+      }
+      .status-yellow {
+        background: var(--warning);
+      }
+
+      .metrics {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 1rem;
+        margin-top: 1rem;
+        z-index: 2;
+      }
+
+      .metric {
+        text-align: center;
+        padding: 1rem;
+        background: var(--light);
+        border-radius: 8px;
+        transition: all 0.3s ease;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .metric::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--accent);
+      }
+
+      .metric:hover {
+        transform: scale(1.05);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      .metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--dark);
+      }
+
+      .metric-label {
+        font-size: 0.8rem;
+        color: var(--gray);
+        margin-top: 0.25rem;
+      }
+
+      .sensor-detail {
+        background: white;
+        border-radius: 12px;
+        padding: 2rem;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .sensor-detail::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--accent);
+      }
+
+      .detail-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 2rem;
+      }
+
+      .back-btn {
+        background: var(--gray);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.3s;
+      }
+
+      .back-btn:hover {
+        background: var(--dark);
+      }
+
+      .chart-container {
+        margin: 2rem 0;
+        height: 300px;
+        position: relative;
+      }
+
+      .time-selector {
+        display: flex;
+        gap: 1rem;
+        margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+
+      .time-btn {
+        padding: 0.5rem 1rem;
+        border: 1px solid var(--border);
+        background: white;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: all 0.3s;
+      }
+
+      .time-btn:hover {
+        background: var(--light);
+      }
+
+      .time-btn.active {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+      }
+
+      .blockchain-info {
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 1rem;
+        margin-top: 2rem;
+        position: relative;
+      }
+
+      .tx-id {
+        font-family: "Courier New", monospace;
+        font-size: 0.9rem;
+        background: white;
+        padding: 0.5rem;
+        border-radius: 4px;
+        margin: 0.5rem 0;
+        word-break: break-all;
+        border: 1px solid var(--border);
+      }
+
+      .verify-btn {
+        background: var(--secondary);
+        color: white;
+        border: none;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: background 0.3s;
+      }
+
+      .verify-btn:hover {
+        background: #0284c7;
+      }
+
+      .alert-card {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        border: 1px solid #f87171;
+        border-radius: 12px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        animation: pulse 2s infinite;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .alert-card::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--danger);
+      }
+
+      @keyframes pulse {
+        0% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+        }
+        70% {
+          box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+        }
+        100% {
+          box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+        }
+      }
+
+      .alert-header {
+        color: var(--danger);
+        font-size: 1.3rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .alert-details {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 1rem;
+        margin: 1rem 0;
+      }
+
+      .alert-detail {
+        background: white;
+        padding: 1rem;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        position: relative;
+      }
+
+      .alert-detail::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--accent);
+      }
+
+      .alert-label {
+        font-size: 0.8rem;
+        color: var(--gray);
+        text-transform: uppercase;
+        font-weight: 600;
+      }
+
+      .alert-value {
+        font-size: 1.1rem;
+        color: var(--dark);
+        margin-top: 0.25rem;
+        font-weight: 600;
+      }
+
+      .guidance {
+        background: #fffbeb;
+        border: 1px solid #fed7aa;
+        border-radius: 8px;
+        padding: 1.5rem;
+        margin-top: 1.5rem;
+        position: relative;
+      }
+
+      .guidance::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 3px;
+        background: var(--warning);
+      }
+
+      .guidance-title {
+        color: #ea580c;
+        font-weight: 700;
+        margin-bottom: 0.5rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      .auth-form {
+        max-width: 500px;
+        margin: 2rem auto;
+        background: white;
+        padding: 2rem;
+        border-radius: 12px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        position: relative;
+        z-index: 20;
+      }
+
+      .auth-form::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 5px;
+        background: var(--accent);
+      }
+
+      .form-group {
+        margin-bottom: 1.5rem;
+        position: relative;
+      }
+
+      .form-label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 500;
+        color: var(--dark);
+      }
+
+      .form-input {
+        width: 100%;
+        padding: 0.75rem;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        font-size: 1rem;
+        transition: border 0.3s;
+        background: white;
+      }
+
+      .form-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px rgba(30, 60, 114, 0.1);
+      }
+
+      .submit-btn {
+        width: 100%;
+        background: var(--primary);
+        color: white;
+        border: none;
+        padding: 0.75rem;
+        border-radius: 6px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        margin-top: 1rem;
+        transition: background 0.3s;
+      }
+
+      .submit-btn:hover {
+        background: var(--primary-light);
+      }
+
+      .user-info {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        z-index: 10;
+      }
+
+      .role-badge {
+        padding: 0.25rem 0.75rem;
+        background: rgba(255, 255, 255, 0.2);
+        border-radius: 12px;
+        font-size: 0.8rem;
+      }
+
+      .no-data {
+        text-align: center;
+        padding: 2rem;
+        color: var(--gray);
+        font-size: 1.2rem;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+
+      .no-data i {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+        color: var(--border);
+      }
+
+      /* Indian map styling */
+      .india-map-legend {
+        background: rgba(255, 255, 255, 0.9);
+        padding: 10px;
+        border-radius: 5px;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        font-size: 14px;
+        line-height: 18px;
+        text-align: center;
+      }
+      
+      .india-map-legend h4 {
+        margin: 0 0 10px;
+        color: #333;
+      }
+
+      /* Mobile responsiveness */
+      @media (max-width: 768px) {
         .header {
-            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
-            color: white;
-            padding: 25px 20px;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding-top: 50px; /* Account for status bar */
-        }
-
-        .header h1 {
-            font-size: 28px;
-            font-weight: 700;
-            margin-bottom: 8px;
-        }
-
-        .header p {
-            font-size: 16px;
-            opacity: 0.9;
+          padding: 1rem;
+          flex-direction: column;
+          gap: 1rem;
+          text-align: center;
         }
 
         .content {
-            padding: 25px 20px 120px;
+          padding: 1rem;
         }
 
-        .screen {
-            display: none;
+        .nav-tabs {
+          top: 120px;
+          padding: 0 1rem;
         }
 
-        .screen.active {
-            display: block;
+        .tab {
+          padding: 0.75rem 1rem;
+          font-size: 0.9rem;
+          white-space: nowrap;
         }
 
-        .map-container {
-            background: #f8f9fa;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 25px;
-            border: 2px solid #e9ecef;
-            position: relative;
-            min-height: 250px;
+        .metrics {
+          grid-template-columns: 1fr;
         }
 
-        .sensor-dot {
-            width: 24px;
-            height: 24px;
-            border-radius: 50%;
-            position: absolute;
-            cursor: pointer;
-            border: 4px solid white;
-            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
-            animation: pulse 2s infinite;
+        #map {
+          height: 400px;
         }
 
-        .sensor-dot.safe {
-            background: #28a745;
+        .sensor-grid {
+          grid-template-columns: 1fr;
         }
 
-        .sensor-dot.alert {
-            background: #dc3545;
+        .sensor-card {
+          padding: 1rem;
         }
 
-        @keyframes pulse {
-            0% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-            100% { transform: scale(1); }
-        }
-
-        .status-card {
-            background: linear-gradient(135deg, #28a745, #20c997);
-            color: white;
-            padding: 25px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.3);
-        }
-
-        .status-card.alert {
-            background: linear-gradient(135deg, #dc3545, #fd7e14);
-            box-shadow: 0 6px 20px rgba(220, 53, 69, 0.3);
-        }
-
-        .status-card h2 {
-            font-size: 20px;
-            margin-bottom: 8px;
-        }
-
-        .btn {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 18px 25px;
-            border-radius: 30px;
-            font-size: 18px;
-            font-weight: 600;
-            cursor: pointer;
-            width: 100%;
-            margin-bottom: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-        }
-
-        .btn-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-top: 25px;
-        }
-
-        .btn-small {
-            padding: 15px 18px;
-            font-size: 16px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .data-card {
-            background: white;
-            border-radius: 20px;
-            padding: 25px;
-            margin-bottom: 20px;
-            box-shadow: 0 6px 20px rgba(0,0,0,0.1);
-            border-left: 5px solid #4facfe;
-        }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 15px;
-            padding: 12px 0;
-            border-bottom: 1px solid #f1f3f4;
-        }
-
-        .data-row:last-child {
-            border-bottom: none;
-            margin-bottom: 0;
-        }
-
-        .data-label {
-            font-weight: 600;
-            color: #666;
-            font-size: 16px;
-        }
-
-        .data-value {
-            color: #333;
-            font-weight: 500;
-            font-size: 16px;
-        }
-
-        .chart-placeholder {
-            background: #f8f9fa;
-            border-radius: 15px;
-            padding: 30px 25px;
-            text-align: center;
-            color: #666;
-            margin: 20px 0;
-            border: 2px dashed #dee2e6;
-            font-size: 16px;
-        }
-
-        .blockchain-info {
-            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            color: white;
-            padding: 20px;
-            border-radius: 15px;
-            font-size: 14px;
-            margin-top: 20px;
+        .detail-header {
+          flex-direction: column;
+          align-items: flex-start;
+          gap: 1rem;
         }
 
         .back-btn {
-            background: #6c757d;
-            margin-bottom: 25px;
-            box-shadow: 0 6px 20px rgba(108, 117, 125, 0.4);
+          align-self: flex-end;
         }
 
-        .alert-screen {
-            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
-            color: white;
-            padding: 30px 25px;
-            border-radius: 20px;
-            text-align: center;
-            margin-bottom: 25px;
-            animation: alertPulse 1s infinite alternate;
+        .alert-details {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 480px) {
+        #map {
+          height: 300px;
         }
 
-        @keyframes alertPulse {
-            from { box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4); }
-            to { box-shadow: 0 10px 30px rgba(255, 107, 107, 0.8); }
+        .logo {
+          font-size: 1.5rem;
         }
 
-        .alert-icon {
-            font-size: 60px;
-            margin-bottom: 15px;
+        .status-badge {
+          font-size: 0.8rem;
+          padding: 0.4rem 0.8rem;
         }
 
-        .navigation {
-            position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            padding: 20px;
-            border-radius: 30px 30px 0 0;
-            box-shadow: 0 -6px 20px rgba(0,0,0,0.15);
-            width: 100%;
+        .tab {
+          padding: 0.5rem 0.8rem;
         }
 
-        .nav-dots {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
+        .screen-title {
+          font-size: 1.2rem;
         }
 
-        .nav-dot {
-            width: 16px;
-            height: 16px;
-            border-radius: 50%;
-            background: #dee2e6;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            -webkit-tap-highlight-color: transparent;
+        .sensor-detail {
+          padding: 1.5rem;
         }
 
-        .nav-dot.active {
-            background: #4facfe;
-            transform: scale(1.3);
+        .chart-container {
+          height: 250px;
         }
-
-        .icon {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            vertical-align: middle;
-        }
-
-        /* Mobile-specific optimizations */
-        @media (max-width: 480px) {
-            .header {
-                padding-top: 60px;
-            }
-            
-            .content {
-                padding: 30px 25px 140px;
-            }
-            
-            .btn {
-                min-height: 56px;
-            }
-            
-            .sensor-dot {
-                width: 28px;
-                height: 28px;
-            }
-        }
-
-        /* Remove tap highlights on mobile */
-        * {
-            -webkit-tap-highlight-color: transparent;
-            -webkit-touch-callout: none;
-            -webkit-user-select: none;
-            -khtml-user-select: none;
-            -moz-user-select: none;
-            -ms-user-select: none;
-            user-select: none;
-        }
-
-        input, textarea {
-            -webkit-user-select: text;
-            -khtml-user-select: text;
-            -moz-user-select: text;
-            -ms-user-select: text;
-            user-select: text;
-        }
+      }
     </style>
-</head>
-<body>
-    <div class="container">
-        <div class="header">
-            <h1>🌊 Aqua-Chain</h1>
-            <p>Decentralized Water Quality Monitoring</p>
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- Water wave background -->
+      <div class="water-wave"></div>
+      <div class="water-wave"></div>
+      <div class="water-wave"></div>
+      
+      <header class="header">
+        <div class="logo"><i class="fas fa-water"></i> AquaChain</div>
+        <div class="user-info" id="userInfo">
+          <div class="status-badge status-safe" id="statusBadge">
+            <i class="fas fa-check-circle"></i>
+            <span id="overallStatus">Overall Water Quality: Safe</span>
+          </div>
+          <div class="user-avatar">
+            <i class="fas fa-user-circle fa-2x"></i>
+          </div>
         </div>
+      </header>
 
+      <nav class="nav-tabs">
+        <button class="tab active" onclick="showScreen('dashboard')">
+          <i class="fas fa-home"></i> Dashboard
+        </button>
+        <button class="tab" onclick="showScreen('alerts')">
+          <i class="fas fa-bell"></i> Alerts
+        </button>
+        <button class="tab" onclick="showScreen('history')">
+          <i class="fas fa-chart-line"></i> Historical Data
+        </button>
+        <button class="tab" onclick="showScreen('profile')">
+          <i class="fas fa-user"></i> Profile
+        </button>
+      </nav>
+
+      <main class="content">
         <!-- Dashboard Screen -->
-        <div id="dashboard" class="screen active">
-            <div class="content">
-                <div class="map-container">
-                    <h3 style="margin-bottom: 15px; color: #666;">Sensor Network Map</h3>
-                    <div class="sensor-dot safe" style="top: 30px; left: 60px;" onclick="showSensorDetail('WQ-123', 'safe')"></div>
-                    <div class="sensor-dot safe" style="top: 80px; right: 40px;" onclick="showSensorDetail('WQ-124', 'safe')"></div>
-                    <div class="sensor-dot alert" style="bottom: 40px; left: 80px;" onclick="showSensorDetail('WQ-456', 'alert')"></div>
-                    <div class="sensor-dot safe" style="bottom: 60px; right: 60px;" onclick="showSensorDetail('WQ-125', 'safe')"></div>
-                    <p style="margin-top: 20px; font-size: 14px; color: #666;">
-                        <span style="color: #28a745;">●</span> Safe &nbsp;&nbsp;
-                        <span style="color: #dc3545;">●</span> Alert
-                    </p>
-                </div>
-
-                <div class="status-card" id="overallStatus">
-                    <h2>Overall Water Quality</h2>
-                    <p style="font-size: 24px; font-weight: bold;">SAFE</p>
-                    <p style="font-size: 14px; opacity: 0.9;">3 of 4 sensors reporting safe levels</p>
-                </div>
-
-                <button class="btn" onclick="showDetailedReport()">
-                    📊 View Detailed Report
-                </button>
-
-                <div class="btn-grid">
-                    <button class="btn btn-small" onclick="showAlerts()">
-                        🔔 My Alerts
-                    </button>
-                    <button class="btn btn-small" onclick="showHistorical()">
-                        📈 Historical Data
-                    </button>
-                </div>
+        <div class="screen active" id="dashboard">
+          <h2 class="screen-title">
+            <i class="fas fa-map-marked-alt"></i> Water Monitoring Dashboard
+          </h2>
+          <div id="map">
+            <div class="map-overlay">
+              <div class="map-overlay-item">
+                <div class="sensor-status status-green"></div>
+                Safe
+              </div>
+              <div class="map-overlay-item">
+                <div class="sensor-status status-yellow"></div>
+                Warning
+              </div>
+              <div class="map-overlay-item">
+                <div class="sensor-status status-red"></div>
+                Alert
+              </div>
             </div>
+          </div>
+
+          <h3 class="screen-title">
+            <i class="fas fa-sensor"></i> Sensor Stations
+          </h3>
+          <div class="sensor-grid" id="sensorGrid"></div>
         </div>
 
-        <!-- Detailed Report Screen -->
-        <div id="detailed-report" class="screen">
-            <div class="content">
-                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
-                
-                <div class="data-card">
-                    <h3 style="margin-bottom: 15px; color: #4facfe;">Sensor Details</h3>
-                    <div class="data-row">
-                        <span class="data-label">Sensor ID:</span>
-                        <span class="data-value" id="sensorId">WQ-123</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Location:</span>
-                        <span class="data-value" id="sensorLocation">River Point A</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Status:</span>
-                        <span class="data-value" id="sensorStatus" style="color: #28a745;">Safe</span>
-                    </div>
-                </div>
-
-                <div class="data-card">
-                    <h3 style="margin-bottom: 15px; color: #4facfe;">Live Data</h3>
-                    <div class="data-row">
-                        <span class="data-label">pH Level:</span>
-                        <span class="data-value" id="phLevel">7.2</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Turbidity:</span>
-                        <span class="data-value" id="turbidity">4 NTU</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Dissolved Oxygen:</span>
-                        <span class="data-value" id="dissolvedOxygen">8 mg/L</span>
-                    </div>
-                </div>
-
-                <div class="chart-placeholder">
-                    📈 24-Hour Trend Chart
-                    <br><small>Backend integration required for real-time data visualization</small>
-                </div>
-
-                <div class="blockchain-info">
-                    <strong>🔗 Blockchain Verification</strong><br>
-                    Transaction ID: <span id="txId">0xAbc...123</span><br>
-                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px; cursor: pointer;">
-                        Verify on-chain
-                    </button>
-                </div>
+        <!-- Sensor Detail Screen -->
+        <div class="screen" id="sensorDetail">
+          <div class="sensor-detail">
+            <div class="detail-header">
+              <h2 id="detailTitle">Sensor Details</h2>
+              <button class="back-btn" onclick="showScreen('dashboard')">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+              </button>
             </div>
+
+            <div class="metrics" id="detailMetrics"></div>
+
+            <h3 class="screen-title">
+              <i class="fas fa-chart-area"></i> Historical Data
+            </h3>
+            <div class="time-selector">
+              <button class="time-btn active" onclick="updateChart('24h')">
+                24 Hours
+              </button>
+              <button class="time-btn" onclick="updateChart('7d')">
+                7 Days
+              </button>
+              <button class="time-btn" onclick="updateChart('30d')">
+                30 Days
+              </button>
+            </div>
+
+            <div class="chart-container">
+              <canvas id="sensorChart"></canvas>
+            </div>
+
+            <div class="blockchain-info">
+              <h4><i class="fas fa-link"></i> Blockchain Verification</h4>
+              <p>Latest reading hash recorded on blockchain:</p>
+              <div class="tx-id" id="txId">
+                0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z
+              </div>
+              <button class="verify-btn" onclick="verifyOnChain()">
+                <i class="fas fa-shield-alt"></i> Verify on Chain
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Alert Screen -->
-        <div id="alert-screen" class="screen">
-            <div class="content">
-                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
-                
-                <div class="alert-screen">
-                    <div class="alert-icon">⚠️</div>
-                    <h2>WATER QUALITY ALERT</h2>
-                    <p style="font-size: 18px; margin: 10px 0;">IMMEDIATE ACTION REQUIRED</p>
-                </div>
-
-                <div class="data-card" style="border-left-color: #dc3545;">
-                    <div class="data-row">
-                        <span class="data-label">Sensor ID:</span>
-                        <span class="data-value">WQ-456</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Location:</span>
-                        <span class="data-value">Community Well B</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Contaminant:</span>
-                        <span class="data-value" style="color: #dc3545;">High Turbidity</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Level:</span>
-                        <span class="data-value" style="color: #dc3545; font-weight: bold;">25 NTU (Unsafe)</span>
-                    </div>
-                </div>
-
-                <div class="data-card" style="background: #fff3cd; border-left-color: #ffc107;">
-                    <h4 style="color: #856404; margin-bottom: 10px;">⚡ Recommended Action</h4>
-                    <p style="color: #856404;">
-                        <strong>Boil water before use.</strong><br>
-                        Local authorities have been automatically notified.<br>
-                        Expected resolution time: 2-4 hours.
-                    </p>
-                </div>
-
-                <div class="blockchain-info">
-                    <strong>🔗 Alert Verification</strong><br>
-                    Transaction ID: 0xDef...456<br>
-                    <button style="background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 5px; margin-top: 5px; cursor: pointer;">
-                        Verify Alert on-chain
-                    </button>
-                </div>
-            </div>
+        <!-- Alerts Screen -->
+        <div class="screen" id="alerts">
+          <h2 class="screen-title">
+            <i class="fas fa-exclamation-triangle"></i> Water Quality Alerts
+          </h2>
+          <div id="alertsList"></div>
         </div>
 
-        <!-- Alerts List Screen -->
-        <div id="alerts-list" class="screen">
-            <div class="content">
-                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
-                
-                <h2 style="margin-bottom: 20px; color: #333;">Recent Alerts</h2>
-
-                <div class="data-card" style="border-left-color: #dc3545;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="color: #dc3545;">High Turbidity Alert</h4>
-                        <span style="font-size: 12px; color: #666;">2 hours ago</span>
-                    </div>
-                    <p style="font-size: 14px; color: #666;">Community Well B - 25 NTU detected</p>
-                    <button style="background: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 5px; font-size: 12px; margin-top: 10px;" onclick="showAlert()">
-                        View Details
-                    </button>
-                </div>
-
-                <div class="data-card" style="border-left-color: #28a745;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="color: #28a745;">System Restored</h4>
-                        <span style="font-size: 12px; color: #666;">1 day ago</span>
-                    </div>
-                    <p style="font-size: 14px; color: #666;">River Point C - Normal levels restored</p>
-                </div>
-
-                <div class="data-card" style="border-left-color: #ffc107;">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                        <h4 style="color: #ffc107;">Maintenance Notice</h4>
-                        <span style="font-size: 12px; color: #666;">3 days ago</span>
-                    </div>
-                    <p style="font-size: 14px; color: #666;">Sensor WQ-127 - Scheduled maintenance completed</p>
-                </div>
-            </div>
+        <!-- History Screen -->
+        <div class="screen" id="history">
+          <h2 class="screen-title">
+            <i class="fas fa-history"></i> Historical Data
+          </h2>
+          <div class="sensor-grid" id="historySensors"></div>
         </div>
 
-        <!-- Historical Data Screen -->
-        <div id="historical-data" class="screen">
-            <div class="content">
-                <button class="btn back-btn" onclick="showDashboard()">← Back to Dashboard</button>
-                
-                <h2 style="margin-bottom: 20px; color: #333;">Historical Data</h2>
-
-                <div class="chart-placeholder" style="min-height: 200px;">
-                    📊 7-Day Water Quality Trends<br>
-                    <small>Backend integration required for historical data visualization</small>
-                </div>
-
-                <div class="data-card">
-                    <h4 style="margin-bottom: 15px;">Weekly Summary</h4>
-                    <div class="data-row">
-                        <span class="data-label">Average pH:</span>
-                        <span class="data-value">7.1</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Average Turbidity:</span>
-                        <span class="data-value">3.8 NTU</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Alerts Generated:</span>
-                        <span class="data-value">2</span>
-                    </div>
-                    <div class="data-row">
-                        <span class="data-label">Uptime:</span>
-                        <span class="data-value">99.2%</span>
-                    </div>
-                </div>
+        <!-- Profile Screen -->
+        <div class="screen" id="profile">
+          <div class="auth-form">
+            <h2 class="screen-title">
+              <i class="fas fa-user-circle"></i> User Profile
+            </h2>
+            <div class="form-group">
+              <label class="form-label">Name</label>
+              <input type="text" class="form-input" value="Sitender Narwal" />
             </div>
-        </div>
-
-        <div class="navigation">
-            <div class="nav-dots">
-                <div class="nav-dot active" onclick="showDashboard()"></div>
-                <div class="nav-dot" onclick="showDetailedReport()"></div>
-                <div class="nav-dot" onclick="showAlerts()"></div>
-                <div class="nav-dot" onclick="showHistorical()"></div>
+            <div class="form-group">
+              <label class="form-label">Email</label>
+              <input type="email" class="form-input" value="sitendernarwal@gmail.com" />
             </div>
+            <div class="form-group">
+              <label class="form-label">Role</label>
+              <input type="text" class="form-input" value="Admin" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notifications</label>
+              <label style="display: flex; align-items: center; gap: 0.5rem">
+                <input type="checkbox" checked /> Push Notifications
+              </label>
+            </div>
+            <div class="form-group">
+              <label class="form-label">Notification Preferences</label>
+              <div style="display: flex; flex-direction: column; gap: 0.5rem">
+                <label style="display: flex; align-items: center; gap: 0.5rem">
+                  <input type="checkbox" checked /> Critical Alerts
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem">
+                  <input type="checkbox" checked /> Warning Notifications
+                </label>
+                <label style="display: flex; align-items: center; gap: 0.5rem">
+                  <input type="checkbox" /> Daily Summary
+                </label>
+              </div>
+            </div>
+            <button class="submit-btn">Update Profile</button>
+          </div>
         </div>
+      </main>
     </div>
 
     <script>
-        function showScreen(screenId) {
-            // Hide all screens
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            
-            // Show target screen
-            document.getElementById(screenId).classList.add('active');
-            
-            // Update navigation dots
-            document.querySelectorAll('.nav-dot').forEach(dot => {
-                dot.classList.remove('active');
-            });
-        }
+      // Enhanced mock data for Indian water sources
+      const mockSensors = [
+        {
+          id: "WQ-001",
+          name: "Yamuna River Station",
+          lat: 28.6667,
+          lng: 77.2333,
+          status: "safe",
+          ph: 7.2,
+          turbidity: 3.8,
+          dissolvedOxygen: 8.5,
+          lastUpdate: "2 minutes ago",
+          txId: "0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z",
+          location: "Delhi, India",
+        },
+        {
+          id: "WQ-002",
+          name: "Ganges River Monitor",
+          lat: 25.3176,
+          lng: 83.0039,
+          status: "alert",
+          ph: 9.1,
+          turbidity: 12.3,
+          dissolvedOxygen: 4.2,
+          lastUpdate: "5 minutes ago",
+          txId: "0x2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z1a",
+          location: "Varanasi, India",
+        },
+        {
+          id: "WQ-003",
+          name: "Chennai Reservoir",
+          lat: 13.0827,
+          lng: 80.2707,
+          status: "safe",
+          ph: 6.8,
+          turbidity: 2.1,
+          dissolvedOxygen: 9.2,
+          lastUpdate: "1 minute ago",
+          txId: "0x3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z1a2b",
+          location: "Chennai, India",
+        },
+        {
+          id: "WQ-004",
+          name: "Mumbai Coastal Water",
+          lat: 19.0760,
+          lng: 72.8777,
+          status: "warning",
+          ph: 6.4,
+          turbidity: 6.8,
+          dissolvedOxygen: 5.8,
+          lastUpdate: "3 minutes ago",
+          txId: "0x4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z1a2b3c",
+          location: "Mumbai, India",
+        },
+        {
+          id: "WQ-005",
+          name: "Bengaluru Lake",
+          lat: 12.9716,
+          lng: 77.5946,
+          status: "safe",
+          ph: 7.4,
+          turbidity: 1.8,
+          dissolvedOxygen: 9.8,
+          lastUpdate: "4 minutes ago",
+          txId: "0x5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z1a2b3c4d",
+          location: "Bengaluru, India",
+        },
+        {
+          id: "WQ-006",
+          name: "Kolkata Groundwater",
+          lat: 22.5726,
+          lng: 88.3639,
+          status: "alert",
+          ph: 5.9,
+          turbidity: 8.5,
+          dissolvedOxygen: 3.7,
+          lastUpdate: "6 minutes ago",
+          txId: "0x6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z1a2b3c4d5e",
+          location: "Kolkata, India",
+        },
+      ];
 
-        function showDashboard() {
-            showScreen('dashboard');
-            document.querySelectorAll('.nav-dot')[0].classList.add('active');
-        }
+      let map;
+      let currentChart;
+      let currentSensor;
+      let markers = [];
 
-        function showDetailedReport() {
-            showScreen('detailed-report');
-            document.querySelectorAll('.nav-dot')[1].classList.add('active');
-        }
+      // Initialize the app
+      document.addEventListener("DOMContentLoaded", function () {
+        initMap();
+        renderSensorGrid();
+        renderAlerts();
+        updateOverallStatus();
+      });
 
-        function showAlert() {
-            showScreen('alert-screen');
-            document.querySelectorAll('.nav-dot')[2].classList.add('active');
-        }
+      function initMap() {
+        // Set initial view to India
+        map = L.map("map").setView([20.5937, 78.9629], 5);
 
-        function showAlerts() {
-            showScreen('alerts-list');
-            document.querySelectorAll('.nav-dot')[2].classList.add('active');
-        }
+        // Use OpenStreetMap tiles
+        L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+          attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+          maxZoom: 18,
+        }).addTo(map);
 
-        function showHistorical() {
-            showScreen('historical-data');
-            document.querySelectorAll('.nav-dot')[3].classList.add('active');
-        }
+        // Add Indian state boundaries (simplified representation)
+        const indiaOutline = L.polygon([
+          [37.5, 68.1], [35.0, 77.5], [28.5, 97.4], [23.5, 97.0], 
+          [21.0, 89.0], [8.0, 77.5], [6.8, 93.3], [15.0, 80.0]
+        ], {
+          color: "#1e3c72",
+          weight: 2,
+          fillOpacity: 0.05
+        }).addTo(map);
 
-        function showSensorDetail(sensorId, status) {
-            const locations = {
-                'WQ-123': 'River Point A',
-                'WQ-124': 'Lake District B',
-                'WQ-456': 'Community Well B',
-                'WQ-125': 'Mountain Stream C'
-            };
+        // Add sensor markers
+        mockSensors.forEach((sensor) => {
+          const color = sensor.status === "safe" ? "green" : sensor.status === "warning" ? "orange" : "red";
 
-            const data = {
-                'WQ-123': { ph: '7.2', turbidity: '4 NTU', oxygen: '8 mg/L', tx: '0xAbc...123' },
-                'WQ-124': { ph: '7.0', turbidity: '3 NTU', oxygen: '9 mg/L', tx: '0xBcd...234' },
-                'WQ-456': { ph: '6.8', turbidity: '25 NTU', oxygen: '6 mg/L', tx: '0xDef...456' },
-                'WQ-125': { ph: '7.3', turbidity: '2 NTU', oxygen: '10 mg/L', tx: '0xGhi...789' }
-            };
+          const marker = L.circleMarker([sensor.lat, sensor.lng], {
+            color: color,
+            fillColor: color,
+            fillOpacity: 0.7,
+            radius: 12,
+          }).addTo(map);
 
-            document.getElementById('sensorId').textContent = sensorId;
-            document.getElementById('sensorLocation').textContent = locations[sensorId];
-            document.getElementById('sensorStatus').textContent = status === 'safe' ? 'Safe' : 'Alert';
-            document.getElementById('sensorStatus').style.color = status === 'safe' ? '#28a745' : '#dc3545';
-            
-            if (data[sensorId]) {
-                document.getElementById('phLevel').textContent = data[sensorId].ph;
-                document.getElementById('turbidity').textContent = data[sensorId].turbidity;
-                document.getElementById('dissolvedOxygen').textContent = data[sensorId].oxygen;
-                document.getElementById('txId').textContent = data[sensorId].tx;
-            }
+          marker.bindPopup(`
+            <div style="font-weight:600;margin-bottom:8px;">${sensor.name}</div>
+            <div><b>Status:</b> ${sensor.status.toUpperCase()}</div>
+            <div><b>pH:</b> ${sensor.ph}</div>
+            <div><b>Turbidity:</b> ${sensor.turbidity} NTU</div>
+            <div><b>DO:</b> ${sensor.dissolvedOxygen} mg/L</div>
+            <div style="margin-top:8px;font-size:0.85em;">${sensor.location}</div>
+          `);
 
-            showDetailedReport();
-        }
-
-        // Simulate real-time updates
-        setInterval(() => {
-            const sensors = document.querySelectorAll('.sensor-dot.safe');
-            sensors.forEach(sensor => {
-                sensor.style.transform = 'scale(' + (0.9 + Math.random() * 0.2) + ')';
-                setTimeout(() => {
-                    sensor.style.transform = 'scale(1)';
-                }, 200);
-            });
-        }, 3000);
-
-        // Add some interactivity
-        document.addEventListener('DOMContentLoaded', function() {
-            // Simulate data updates every 30 seconds
-            setInterval(() => {
-                const phElement = document.getElementById('phLevel');
-                if (phElement) {
-                    const currentPH = parseFloat(phElement.textContent);
-                    const newPH = (currentPH + (Math.random() - 0.5) * 0.2).toFixed(1);
-                    phElement.textContent = newPH;
-                }
-            }, 30000);
+          marker.on("click", () => showSensorDetail(sensor.id));
+          markers.push(marker);
         });
+      }
+
+      function renderSensorGrid() {
+        const grid = document.getElementById("sensorGrid");
+        grid.innerHTML = "";
+
+        mockSensors.forEach((sensor) => {
+          const statusClass = sensor.status === "safe" ? "status-green" : 
+                             sensor.status === "warning" ? "status-yellow" : "status-red";
+
+          const card = document.createElement("div");
+          card.className = `sensor-card status-${sensor.status}`;
+          card.onclick = () => showSensorDetail(sensor.id);
+
+          card.innerHTML = `
+            <div class="sensor-header">
+              <div>
+                <div class="sensor-name">${sensor.name}</div>
+                <div class="sensor-id">${sensor.id} • ${sensor.lastUpdate}</div>
+              </div>
+              <div class="sensor-status ${statusClass}"></div>
+            </div>
+            <div style="color: var(--gray); margin-bottom: 1rem; font-size: 0.9rem;">
+              <i class="fas fa-map-marker-alt"></i> ${sensor.location}
+            </div>
+            <div class="metrics">
+              <div class="metric">
+                <div class="metric-value">${sensor.ph}</div>
+                <div class="metric-label">pH</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">${sensor.turbidity}</div>
+                <div class="metric-label">NTU</div>
+              </div>
+              <div class="metric">
+                <div class="metric-value">${sensor.dissolvedOxygen}</div>
+                <div class="metric-label">DO mg/L</div>
+              </div>
+            </div>
+          `;
+
+          grid.appendChild(card);
+        });
+      }
+
+      function showSensorDetail(sensorId) {
+        currentSensor = mockSensors.find((s) => s.id === sensorId);
+        if (!currentSensor) return;
+
+        document.getElementById("detailTitle").textContent = currentSensor.name;
+        document.getElementById("txId").textContent = currentSensor.txId;
+
+        // Update metrics
+        const metricsContainer = document.getElementById("detailMetrics");
+        metricsContainer.innerHTML = `
+          <div class="metric">
+            <div class="metric-value">${currentSensor.ph}</div>
+            <div class="metric-label">pH Level</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">${currentSensor.turbidity}</div>
+            <div class="metric-label">Turbidity (NTU)</div>
+          </div>
+          <div class="metric">
+            <div class="metric-value">${currentSensor.dissolvedOxygen}</div>
+            <div class="metric-label">Dissolved Oxygen (mg/L)</div>
+          </div>
+        `;
+
+        updateChart("24h");
+        showScreen("sensorDetail");
+      }
+
+      function updateChart(period) {
+        // Update active time button
+        document
+          .querySelectorAll(".time-btn")
+          .forEach((btn) => btn.classList.remove("active"));
+        event.target.classList.add("active");
+
+        if (currentChart) {
+          currentChart.destroy();
+        }
+
+        // Generate mock time series data
+        const hours = period === "24h" ? 24 : period === "7d" ? 168 : 720;
+        const labels = [];
+        const phData = [];
+        const turbidityData = [];
+        const doData = [];
+
+        for (let i = hours; i >= 0; i--) {
+          const date = new Date();
+          date.setHours(date.getHours() - i);
+
+          // Format date based on period
+          let label;
+          if (period === "24h") {
+            label = date.toLocaleTimeString([], {
+              hour: "2-digit",
+              minute: "2-digit",
+            });
+          } else if (period === "7d") {
+            label = date.toLocaleDateString([], { weekday: "short" });
+          } else {
+            label = date.toLocaleDateString([], {
+              day: "numeric",
+              month: "short",
+            });
+          }
+
+          labels.push(label);
+
+          // Generate realistic variation around base values
+          phData.push(currentSensor.ph + (Math.random() - 0.5) * 0.5);
+          turbidityData.push(
+            Math.max(0, currentSensor.turbidity + (Math.random() - 0.5) * 2)
+          );
+          doData.push(
+            Math.max(
+              0,
+              currentSensor.dissolvedOxygen + (Math.random() - 0.5) * 1
+            )
+          );
+        }
+
+        const ctx = document.getElementById("sensorChart").getContext("2d");
+        currentChart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels: labels,
+            datasets: [
+              {
+                label: "pH",
+                data: phData,
+                borderColor: "rgb(59, 130, 246)",
+                backgroundColor: "rgba(59, 130, 246, 0.1)",
+                tension: 0.1,
+                borderWidth: 2,
+              },
+              {
+                label: "Turbidity (NTU)",
+                data: turbidityData,
+                borderColor: "rgb(249, 115, 22)",
+                backgroundColor: "rgba(249, 115, 22, 0.1)",
+                tension: 0.1,
+                borderWidth: 2,
+              },
+              {
+                label: "Dissolved Oxygen (mg/L)",
+                data: doData,
+                borderColor: "rgb(34, 197, 94)",
+                backgroundColor: "rgba(34, 197, 94, 0.1)",
+                tension: 0.1,
+                borderWidth: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+              x: {
+                grid: {
+                  display: false,
+                },
+              },
+              y: {
+                beginAtZero: false,
+                grid: {
+                  color: "rgba(0,0,0,0.05)",
+                },
+              },
+            },
+            plugins: {
+              legend: {
+                position: "top",
+              },
+              tooltip: {
+                mode: "index",
+                intersect: false,
+              },
+            },
+            animation: {
+              duration: 1000,
+            },
+          },
+        });
+      }
+
+      function renderAlerts() {
+        const alertsList = document.getElementById("alertsList");
+        const alertSensors = mockSensors.filter(
+          (s) => s.status === "alert" || s.status === "warning"
+        );
+
+        if (alertSensors.length === 0) {
+          alertsList.innerHTML = `
+            <div class="no-data">
+              <i class="fas fa-check-circle"></i>
+              <h3>No Active Alerts</h3>
+              <p>All water quality parameters are within safe limits.</p>
+            </div>
+          `;
+          return;
+        }
+
+        alertsList.innerHTML = "";
+        alertSensors.forEach((sensor) => {
+          const isHighAlert = sensor.status === "alert";
+          const alertType = isHighAlert ? "CRITICAL ALERT" : "WARNING";
+          const contaminant =
+            sensor.ph > 8.5
+              ? "High pH (Alkaline)"
+              : sensor.ph < 6.5
+              ? "Low pH (Acidic)"
+              : sensor.turbidity > 10
+              ? "High Turbidity"
+              : "Low Dissolved Oxygen";
+
+          const alertDiv = document.createElement("div");
+          alertDiv.className = "alert-card";
+
+          alertDiv.innerHTML = `
+            <div class="alert-header">
+              <i class="fas fa-exclamation-triangle"></i>
+              ${alertType}: Water Quality Issue Detected
+            </div>
+            <div class="alert-details">
+              <div class="alert-detail">
+                <div class="alert-label">Sensor ID</div>
+                <div class="alert-value">${sensor.id}</div>
+              </div>
+              <div class="alert-detail">
+                <div class="alert-label">Location</div>
+                <div class="alert-value">${sensor.location}</div>
+              </div>
+              <div class="alert-detail">
+                <div class="alert-label">Contaminant</div>
+                <div class="alert-value">${contaminant}</div>
+              </div>
+              <div class="alert-detail">
+                <div class="alert-label">Level</div>
+                <div class="alert-value">${
+                  isHighAlert ? "Critical" : "Elevated"
+                }</div>
+              </div>
+            </div>
+            <div class="guidance">
+              <div class="guidance-title">
+                <i class="fas fa-info-circle"></i> Safety Guidance
+              </div>
+              <p>${
+                isHighAlert
+                  ? "Do not consume water from this source. Boil water for at least 3 minutes before use. Authorities have been notified and are investigating."
+                  : "Water quality is degraded but may be safe for non-consumption uses. Avoid drinking without treatment. Monitor closely for changes."
+              }</p>
+              <div style="margin-top: 1.5rem;">
+                <div class="alert-detail">
+                  <div class="alert-label">Last Reading</div>
+                  <div class="alert-value">${sensor.lastUpdate}</div>
+                </div>
+                <div class="alert-detail">
+                  <div class="alert-label">Blockchain TxID</div>
+                  <div class="tx-id">${sensor.txId}</div>
+                  <button class="verify-btn" style="margin-top: 0.5rem;" onclick="verifyOnChain()">
+                    <i class="fas fa-shield-alt"></i> Verify on Chain
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+
+          alertsList.appendChild(alertDiv);
+        });
+      }
+
+      function updateOverallStatus() {
+        const hasAlerts = mockSensors.some((s) => s.status === "alert");
+        const hasWarnings = mockSensors.some((s) => s.status === "warning");
+
+        const statusElement = document.getElementById("overallStatus");
+        const statusBadge = document.getElementById("statusBadge");
+
+        if (hasAlerts) {
+          statusElement.textContent = "Overall Water Quality: Alert";
+          statusBadge.className = "status-badge status-alert";
+        } else if (hasWarnings) {
+          statusElement.textContent = "Overall Water Quality: Warning";
+          statusBadge.className = "status-badge status-warning";
+        } else {
+          statusElement.textContent = "Overall Water Quality: Safe";
+          statusBadge.className = "status-badge status-safe";
+        }
+      }
+
+      function showScreen(screenId) {
+        // Hide all screens
+        document
+          .querySelectorAll(".screen")
+          .forEach((screen) => screen.classList.remove("active"));
+        document
+          .querySelectorAll(".tab")
+          .forEach((tab) => tab.classList.remove("active"));
+
+        // Show selected screen
+        document.getElementById(screenId).classList.add("active");
+        event.target.classList.add("active");
+
+        // Special handling for history screen
+        if (screenId === "history") {
+          const historyContainer = document.getElementById("historySensors");
+          historyContainer.innerHTML = "";
+
+          mockSensors.forEach((sensor) => {
+            const card = document.createElement("div");
+            card.className = `sensor-card status-${sensor.status}`;
+            card.onclick = () => showSensorDetail(sensor.id);
+
+            card.innerHTML = `
+              <div class="sensor-header">
+                <div class="sensor-name">${sensor.name}</div>
+                <div class="sensor-status ${
+                  sensor.status === "safe"
+                    ? "status-green"
+                    : sensor.status === "warning"
+                    ? "status-yellow"
+                    : "status-red"
+                }"></div>
+              </div>
+              <div class="sensor-id">${sensor.id}</div>
+              <div style="margin-top: 1rem;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>pH:</span>
+                  <span>${sensor.ph}</span>
+                </div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Turbidity:</span>
+                  <span>${sensor.turbidity} NTU</span>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span>Dissolved Oxygen:</span>
+                  <span>${sensor.dissolvedOxygen} mg/L</span>
+                </div>
+              </div>
+              <div style="margin-top: 1rem; color: var(--gray); font-size: 0.9rem;">
+                <i class="fas fa-clock"></i> Last updated: ${sensor.lastUpdate}
+              </div>
+            `;
+
+            historyContainer.appendChild(card);
+          });
+        }
+      }
+
+      function verifyOnChain() {
+        // Mock blockchain verification
+        const txId = currentSensor
+          ? currentSensor.txId
+          : "0x1a2b3c4d5e6f7g8h9i0j1k2l3m4n5o6p7q8r9s0t1u2v3w4x5y6z";
+        alert(
+          `Opening blockchain explorer...\n\nTransaction verified on Polygon network.\n\nTX ID: ${txId}\nBlock: 45,234,567\nConfirmations: 142\nGas Used: 21,000`
+        );
+      }
+
+      // Simulate real-time updates
+      setInterval(() => {
+        // Randomly update sensor values slightly
+        mockSensors.forEach((sensor) => {
+          sensor.ph += (Math.random() - 0.5) * 0.1;
+          sensor.turbidity += (Math.random() - 0.5) * 0.2;
+          sensor.dissolvedOxygen += (Math.random() - 0.5) * 0.1;
+
+          // Keep values within reasonable bounds
+          sensor.ph = Math.max(5, Math.min(10, sensor.ph));
+          sensor.turbidity = Math.max(0, Math.min(20, sensor.turbidity));
+          sensor.dissolvedOxygen = Math.max(0, Math.min(12, sensor.dissolvedOxygen));
+
+          // Update status based on thresholds
+          if (
+            sensor.ph < 6.5 ||
+            sensor.ph > 8.5 ||
+            sensor.turbidity > 10 ||
+            sensor.dissolvedOxygen < 5
+          ) {
+            sensor.status = "alert";
+          } else if (
+            sensor.ph < 6.8 ||
+            sensor.ph > 8.2 ||
+            sensor.turbidity > 5 ||
+            sensor.dissolvedOxygen < 6
+          ) {
+            sensor.status = "warning";
+          } else {
+            sensor.status = "safe";
+          }
+
+          // Update "last update" time
+          const minutes = Math.floor(Math.random() * 5) + 1;
+          sensor.lastUpdate = `${minutes} minute${minutes > 1 ? "s" : ""} ago`;
+        });
+
+        // Update UI if on dashboard
+        if (document.getElementById("dashboard").classList.contains("active")) {
+          renderSensorGrid();
+          updateOverallStatus();
+        }
+
+        // Update alerts
+        renderAlerts();
+      }, 30000); // Update every 30 seconds
     </script>
-</body>
+  </body>
 </html>
